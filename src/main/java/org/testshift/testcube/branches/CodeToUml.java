@@ -132,19 +132,24 @@ public class CodeToUml {
     public static int instrumentFor(String[] lines, int starLineNumber){
         int branchNum = 0;
         for(int i=0; i<lines.length; i++){
-            if(lines[i].contains("for") && Text(lines[i]).stream().filter(str -> str.contains("for")).findAny().isEmpty()){
-                branchNum += 1;
-                int endBracket = findEndBracket(lines, i, lines[i].indexOf("for")+3);
-                char endMark = findEndMark(lines, endBracket+1, i);
-                int endLine = findEndline(endMark, lines, i);
-                StringBuilder stringBuilder = new StringBuilder(lines[i]);
-                stringBuilder.insert(endBracket+1, "is ("+(starLineNumber+i)+": True / enter loop)\n");
-                lines[i] = stringBuilder.toString();
-                lines[i] = lines[i].replace("for", "\nwhile");
-                stringBuilder = new StringBuilder(lines[endLine]);
-                stringBuilder.insert(lines[endLine].indexOf(endMark)+1, "\nendwhile ("+(i+starLineNumber)+": False " +
-                                                                        "/ end loop)\n");
-                lines[endLine] = stringBuilder.toString();
+            if(lines[i].contains("for") && Text(lines[i]).stream().filter(str -> str.contains("for")).findAny().isEmpty()) {
+                if(lines[i].contains(";") ) {
+                    branchNum += 1;
+                    int endBracket = findEndBracket(lines, i, lines[i].indexOf("for") + 3);
+                    char endMark = findEndMark(lines, endBracket + 1, i);
+                    int endLine = findEndline(endMark, lines, i);
+                    StringBuilder stringBuilder = new StringBuilder(lines[i]);
+                    stringBuilder.insert(endBracket + 1, "is (" + (starLineNumber + i) + ": True / enter loop)\n");
+                    lines[i] = stringBuilder.toString();
+                    lines[i] = lines[i].replace("for", "\nwhile");
+                    stringBuilder = new StringBuilder(lines[endLine]);
+                    stringBuilder.insert(lines[endLine].indexOf(endMark) + 1, "\nendwhile (" + (i + starLineNumber) + ": False " +
+                                                                              "/ end loop)\n");
+                    lines[endLine] = stringBuilder.toString();
+                }
+                else{
+                    lines[i] = lines[i] + ";";
+                }
             }
         }
         return branchNum;

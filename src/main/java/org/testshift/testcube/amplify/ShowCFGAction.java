@@ -257,7 +257,7 @@ public class ShowCFGAction extends AnAction {
 //                                                                          "--relative-path-to-source-code", finalRelativePathToSourceCode,
 //                                                                          "--relative-path-to-test-code", finalRelativePathToTestCode,
                                                                           "--test-criterion", "BranchCoverageSelector",
-                                                                          "--amplifiers", "TargetMethodAdderOnExistingObjectsAmplifier",
+                                                                          "--amplifiers", "TargetMethodAdderOnExistingObjectsAmplifier,MethodDuplicationAmplifier,MethodRemove,FastLiteralAmplifier,MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier,NullifierAmplifier,ArrayAmplifier",
 //                                                                          "--input-ampl-distributor", "RandomInputAmplDistributor",
                                                                           "--iteration", "1",
                                                                           "--test", testClassName,
