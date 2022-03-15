@@ -170,10 +170,10 @@ public class ShowCFGAction extends AnAction {
         Sdk projectSdk = ProjectRootManager.getInstance(currentProject).getProjectSdk();
 
         if (projectSdk != null) {
-            AppSettingsState.getInstance().java8Path = projectSdk.getHomePath();
+            AppSettingsState.getInstance().javaJDKPath = projectSdk.getHomePath();
         }
 
-        if (AppSettingsState.getInstance().java8Path.isEmpty()) {
+        if (AppSettingsState.getInstance().javaJDKPath.isEmpty()) {
             AskJavaPathDialogWrapper dialog = new AskJavaPathDialogWrapper();
             dialog.showAndGet();
             boolean pathValid = dialog.setJavaPathIfValid();
@@ -215,7 +215,7 @@ public class ShowCFGAction extends AnAction {
             // todo handle non valid
         }
 
-        String javaHome = AppSettingsState.getInstance().java8Path;
+        String javaHome = AppSettingsState.getInstance().javaJDKPath;
         String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
 
         String pluginPath = PathManager.getPluginsPath();
@@ -257,7 +257,8 @@ public class ShowCFGAction extends AnAction {
 //                                                                          "--relative-path-to-source-code", finalRelativePathToSourceCode,
 //                                                                          "--relative-path-to-test-code", finalRelativePathToTestCode,
                                                                           "--test-criterion", "BranchCoverageSelector",
-                                                                          "--amplifiers", "TargetMethodAdderOnExistingObjectsAmplifier,MethodDuplicationAmplifier,MethodRemove,FastLiteralAmplifier,MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier,NullifierAmplifier,ArrayAmplifier",
+                                                                          "--amplifiers",
+                                                                          "TargetMethodAdderOnExistingObjectsAmplifier,MethodDuplicationAmplifier,MethodRemoveAmplifier,FastLiteralAmplifier,MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier,NullifierAmplifier,ArrayAmplifier",
 //                                                                          "--input-ampl-distributor", "RandomInputAmplDistributor",
                                                                           "--iteration", "1",
                                                                           "--test", testClassName,

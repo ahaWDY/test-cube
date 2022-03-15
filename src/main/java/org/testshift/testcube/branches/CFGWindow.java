@@ -249,7 +249,7 @@ public class CFGWindow extends JPanel implements Disposable {
                                                                           "--target-branch", branch,
                                                                           "--output-directory", Util.getDSpotOutputPath(currentProject),
                                                                           "--amplifiers",
-                                                                          "TargetMethodAdderOnExistingObjectsAmplifier,MethodDuplicationAmplifier,MethodRemove,FastLiteralAmplifier,MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier,NullifierAmplifier,ArrayAmplifier",
+                                                                          "TargetMethodAdderOnExistingObjectsAmplifier,MethodDuplicationAmplifier,MethodRemoveAmplifier,FastLiteralAmplifier,MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier,NullifierAmplifier,ArrayAmplifier",
 //                                                                          "MethodDuplicationAmplifier,MethodRemove,FastLiteralAmplifier,MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier,NullifierAmplifier,ArrayAmplifier",
                                                                           "--max-test-amplified", "25",
                                                                           "--automatic-builder", finalAutomaticBuilder,
