@@ -164,10 +164,10 @@ public class CFGWindow extends JPanel implements Disposable {
         Sdk projectSdk = ProjectRootManager.getInstance(currentProject).getProjectSdk();
 
         if (projectSdk != null) {
-            AppSettingsState.getInstance().java8Path = projectSdk.getHomePath();
+            AppSettingsState.getInstance().javaJDKPath = projectSdk.getHomePath();
         }
 
-        if (AppSettingsState.getInstance().java8Path.isEmpty()) {
+        if (AppSettingsState.getInstance().javaJDKPath.isEmpty()) {
             AskJavaPathDialogWrapper dialog = new AskJavaPathDialogWrapper();
             dialog.showAndGet();
             boolean pathValid = dialog.setJavaPathIfValid();
@@ -205,7 +205,7 @@ public class CFGWindow extends JPanel implements Disposable {
             // todo handle non valid
         }
 
-        String javaHome = AppSettingsState.getInstance().java8Path;
+        String javaHome = AppSettingsState.getInstance().javaJDKPath;
         String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
 
         String pluginPath = PathManager.getPluginsPath();
