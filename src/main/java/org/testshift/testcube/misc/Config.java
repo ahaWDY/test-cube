@@ -17,4 +17,8 @@ public class Config {
     public static final String AMPLIFIERS_ALL = "MethodDuplicationAmplifier,MethodRemoveAmplifier,FastLiteralAmplifier," +
                                                 "MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier," +
                                                 "NullifierAmplifier,ArrayAmplifier";
+    public static final String AMPLIFIERS_TARGET = "TargetMethodAdderOnExistingObjectsAmplifier," +
+                                                   "MethodDuplicationAmplifier,MethodRemoveAmplifier,FastLiteralAmplifier," +
+                                                   "MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier," +
+                                                   "NullifierAmplifier,ArrayAmplifier";
 }

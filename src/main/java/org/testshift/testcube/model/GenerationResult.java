@@ -60,7 +60,7 @@ public class GenerationResult {
 
         List<TestCaseBranchCoverageJSON> testCaseBranchCoverageJSONList = coverageResult.getTestCases();
 
-        String amplifiedTestClassPath = Util.getAmplifiedTestClassPath(project, testClass);
+        String amplifiedTestClassPath = Util.getAmplifiedTestClassPathToPrettify(project, testClass);
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(amplifiedTestClassPath);
 
         if (file != null) {

@@ -96,7 +96,7 @@ public class Util {
         Gson gson = new Gson();
         try {
             return gson.fromJson(new FileReader(
-                                         project.getBasePath() + Config.OUTPUT_PATH_DSPOT + File.separator + testClass + "_report.json"),
+                                         getOutputSavePath(project) + File.separator + testClass + "_report.json"),
                                  TestClassBranchCoverageJSON.class);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
