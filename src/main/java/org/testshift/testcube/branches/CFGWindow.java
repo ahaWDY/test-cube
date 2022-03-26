@@ -24,10 +24,7 @@ import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.
 import eu.stamp_project.dspot.common.report.output.selector.extendedcoverage.json.TestClassJSON;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
-import org.testshift.testcube.amplify.DSpotStartConfiguration;
-import org.testshift.testcube.amplify.InspectDSpotTerminalOutputAction;
-import org.testshift.testcube.amplify.ShowCFGCoverageAction;
-import org.testshift.testcube.amplify.StartTestCubeAction;
+import org.testshift.testcube.amplify.*;
 import org.testshift.testcube.branches.rendering.ImageFormat;
 import org.testshift.testcube.branches.rendering.RenderCommand;
 import org.testshift.testcube.inspect.InspectResultWithCFGAction;
@@ -35,6 +32,7 @@ import org.testshift.testcube.inspect.InspectTestCubeResultsAction;
 import org.testshift.testcube.misc.Config;
 import org.testshift.testcube.misc.TestCubeNotifier;
 import org.testshift.testcube.misc.Util;
+import org.testshift.testcube.model.GenerationResult;
 import org.testshift.testcube.settings.AppSettingsState;
 import org.testshift.testcube.settings.AskJavaPathDialogWrapper;
 import org.testshift.testcube.settings.AskMavenHomeDialogWrapper;
@@ -67,6 +65,7 @@ public class CFGWindow extends JPanel implements Disposable {
     private Set<Util.Branch> initialCoveredBranches;
 
     private int branchNum;
+    private String selectedBranch;
 
     public CFGWindow(Project project, String targetClass, String targetMethod, String source,
                      Set<String> initialCoveredLines,
@@ -125,20 +124,20 @@ public class CFGWindow extends JPanel implements Disposable {
     private void finishSelection(Project project) {
         if(branchNum>0) {
             cfgPanel.recordHilight();
-            String selectedBranch = cfgPanel.getHilightText();
+            selectedBranch = cfgPanel.getHilightText();
             if (!selectedBranch.equals("")) {
-                try {
-                    runDSpot(project, selectedBranch);
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
+                //todo: first find in previous generation
+                List<String> expectedTests = Util.getExistingTestMethods(project, testClass, selectedBranch);
+                if(expectedTests.isEmpty()) {
+                    try {
+                        runDSpot(project, selectedBranch);
+                    } catch (IOException | InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
-//                TestCubeNotifier notifier = new TestCubeNotifier();
-//                notifier.notify(project,
-//                                "Test Cube found " + 1 + " amplified test cases.",
-//
-//                                new InspectResultWithCFGAction(project, testClass, testMethod,
-//                                                               new CFGPanel(cfgPanel), targetMethod),
-//                                new InspectDSpotTerminalOutputAction());
+                else{
+                    notifyDSpotFinished(project, expectedTests);
+                }
             }
             else {
                 NoSelectionDialog dialog = new NoSelectionDialog();
@@ -147,11 +146,17 @@ public class CFGWindow extends JPanel implements Disposable {
             }
         }
         else{
-            String selectedBranch = "noBranch";
-            try {
-                runDSpot(project, selectedBranch);
-            } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
+            selectedBranch = "noBranch";
+            List<String> expectedTests = Util.getExistingTestMethods(project, testClass, selectedBranch);
+            if(expectedTests.isEmpty()) {
+                try {
+                    runDSpot(project, selectedBranch);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            else{
+                notifyDSpotFinished(project, expectedTests);
             }
         }
 
@@ -165,74 +170,14 @@ public class CFGWindow extends JPanel implements Disposable {
             testCubePlugin.getPluginClassLoader();
         }
         DSpotStartConfiguration configuration = new DSpotStartConfiguration(currentProject, moduleRootPath);
+        PrettifierStartConfiguration prettifierConfiguration = new PrettifierStartConfiguration(currentProject,
+                                                                                                moduleRootPath);
 
-//        Sdk projectSdk = ProjectRootManager.getInstance(currentProject).getProjectSdk();
-//
-//        if (projectSdk != null) {
-//            AppSettingsState.getInstance().javaJDKPath = projectSdk.getHomePath();
-//        }
-//
-//        if (AppSettingsState.getInstance().javaJDKPath.isEmpty()) {
-//            AskJavaPathDialogWrapper dialog = new AskJavaPathDialogWrapper();
-//            dialog.showAndGet();
-//            boolean pathValid = dialog.setJavaPathIfValid();
-//            // todo handle non valid
-//        }
-//
-//        // check if Gradle or Maven
-//        boolean isGradle = ExternalSystemApiUtil.isExternalSystemAwareModule(new ProjectSystemId("GRADLE"),
-//                                                                             ModuleManager.getInstance(currentProject)
-//                                                                                          .getModules()[0]);
-//        boolean isMaven = ExternalSystemApiUtil.isExternalSystemAwareModule(new ProjectSystemId("Maven"),
-//                                                                            ModuleManager.getInstance(currentProject)
-//                                                                                         .getModules()[0]);
-//
-//        String relativePathToClasses = "";
-//        String relativePathToTestClasses = "";
-//        String automaticBuilder = "";
-//        if (isMaven) {
-//            relativePathToClasses = "target" + File.separator + "classes" + File.separator;
-//            relativePathToTestClasses = "target" + File.separator + "test-classes" + File.separator;
-//            automaticBuilder = "Maven";
-//        } else {
-//            relativePathToClasses = "bin" + File.separator + "main" + File.separator;
-//            relativePathToTestClasses = "bin" + File.separator + "test" + File.separator;
-//            automaticBuilder = "Gradle";
-//            if (!isGradle) {
-//                logger.info("Neither Gradle nor Maven");
-//            }
-//        }
-//
-//        if (isMaven && AppSettingsState.getInstance().mavenHome.isEmpty()) {
-//            AskMavenHomeDialogWrapper dialog = new AskMavenHomeDialogWrapper();
-//            dialog.showAndGet();
-//            boolean mavenHomeValid = dialog.setMavenHomeIfValid();
-//            // todo handle non valid
-//        }
-//
-//        String javaHome = AppSettingsState.getInstance().javaJDKPath;
-//        String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
-//
-//        String pluginPath = PathManager.getPluginsPath();
-//        String dSpotPath = pluginPath + File.separator + "test-cube" + File.separator + "lib" + File.separator +
-//                           "dspot-3.1.1-SNAPSHOT-jar-with-dependencies.jar";
-//
-//        String finalRelativePathToClasses = relativePathToClasses;
-//        String finalRelativePathToTestClasses = relativePathToTestClasses;
-//        String finalAutomaticBuilder = automaticBuilder;
         Task.Backgroundable dspotTask = new Task.Backgroundable(currentProject, "Amplifying test", true) {
 
             public void run(@NotNull ProgressIndicator indicator) {
                 // clean output directory
                 // todo close open amplification result windows or split output into different directories
-//                try {
-//                    File outputDirectory = new File(Util.getDSpotOutputPath(currentProject));
-//                    if (outputDirectory.exists()) {
-//                        FileUtils.cleanDirectory(outputDirectory);
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
 
                 File outputDir = new File(Util.getOutputSavePath(currentProject));
                 if (!outputDir.exists()) {
@@ -251,134 +196,28 @@ public class CFGWindow extends JPanel implements Disposable {
                                StandardCopyOption.REPLACE_EXISTING);
 
                     // prettify generated test cases
-//                    spawnDSpotProcess(prettifierConfiguration, currentProject);
+                    spawnDSpotProcess(prettifierConfiguration, currentProject);
+
+                    FileUtils.delete(new File(Util.getAmplifiedTestClassPathToPrettify(currentProject, testClass)));
+                    Files.move(new File(Util.getAmplifiedTestClassPath(currentProject, testClass)).toPath(),
+                               new File(Util.getAmplifiedTestClassPathToPrettify(currentProject, testClass)).toPath(),
+                               StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                // popup about completion
-                notifyDSpotFinished(currentProject);
-//
-//
-//                String targetModule = "";
-//                if (isMaven) {
-//                    targetModule = moduleRootPath.replace(currentProject.getBasePath() + "/", "");
-//                }
-//
-//                // @formatter:off
-//                List<String> dSpotStarter = new ArrayList<>(Arrays.asList(javaBin, "-jar", dSpotPath,
-//                                                                          "--absolute-path-to-project-root", currentProject.getBasePath(),
-//                                                                          "--relative-path-to-classes", finalRelativePathToClasses,
-//                                                                          "--relative-path-to-test-classes", finalRelativePathToTestClasses,
-//                                                                          "--test-criterion", "BranchCoverageSelector",
-//                                                                          "--input-ampl-distributor",
-//                                                                          "RandomInputAmplDi stributor",
-//                                                                          "--test", testClass,
-//                                                                          // TODO handlle null on testMethod
-//                                                                          "--test-cases", testMethod,
-//                                                                          "--target-class", targetClass,
-//                                                                          "--target-method", targetMethod,
-//                                                                          "--target-branch", branch,
-//                                                                          "--output-directory", Util.getDSpotOutputPath(currentProject),
-//                                                                          "--amplifiers",
-//                                                                          "TargetMethodAdderOnExistingObjectsAmplifier,MethodDuplicationAmplifier,MethodRemoveAmplifier,FastLiteralAmplifier,MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier,NullifierAmplifier,ArrayAmplifier",
-////                                                                          "MethodDuplicationAmplifier,MethodRemove,FastLiteralAmplifier,MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier,NullifierAmplifier,ArrayAmplifier",
-//                                                                          "--max-test-amplified", "25",
-//                                                                          "--automatic-builder", finalAutomaticBuilder,
-//                                                                          //"--generate-new-test-class",
-//                                                                          //"--keep-original-test-methods",
-//                                                                          "--verbose",
-//                                                                          "--dev-friendly",
-//                                                                          "--clean",
-//                                                                          "--with-comment=None"));
-//                // @formatter:on
-//
-////                if (!AppSettingsState.getInstance().generateAssertions) {
-////                    dSpotStarter.add("--only-input-amplification");
-////                }
-//                @NotNull Module[] modules = ModuleManager.getInstance(currentProject).getModules();
-//                if (modules.length > 1) {
-//                    dSpotStarter.add("--target-module");
-//                    dSpotStarter.add(targetModule);
-//                }
-//
-//                ProcessBuilder pb = new ProcessBuilder(dSpotStarter);
-//
-//                pb.environment().put("MAVEN_HOME", AppSettingsState.getInstance().mavenHome);
-//
-//                File workdir = new File(Util.getTestCubeOutputPath(currentProject) + File.separator + "workdir");
-//                if (!workdir.exists()) {
-//                    if (!workdir.mkdirs()) {
-//                        logger.error("Could not create workdir output directory!");
-//                    }
-//                }
-//                File workdirTarget = new File(workdir.getPath() + File.separator + "target" + File.separator + "dspot");
-//                if (!workdirTarget.exists()) {
-//                    if (!workdirTarget.mkdirs()) {
-//                        logger.error("Could not create workdir/target/dspot output directory!");
-//                    }
-//                }
-//                pb.directory(workdir);
-//
-//                pb.redirectErrorStream(true);
-//                try {
-//                    Process p = pb.start();
-//
-//                    File outputDir = new File(Util.getTestCubeOutputPath(currentProject));
-//                    if (!outputDir.exists()) {
-//                        if (!outputDir.mkdirs()) {
-//                            logger.error("Could not create Test Cube output directory!");
-//                        }
-//                    }
-//
-//                    File dSpotTerminalOutput = new File(
-//                            Util.getTestCubeOutputPath(currentProject) + File.separator + "terminal_output_dspot.txt");
-//
-//                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(dSpotTerminalOutput))) {
-//                        InputStream is = p.getInputStream();
-//                        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-//                        for (String line = br.readLine(); line != null; line = br.readLine()) {
-//                            System.out.println(line);
-//                            writer.write(line);
-//                            writer.newLine();
-//                        }
-//                    }
-//                    p.waitFor();
-//                    System.out.println(p.exitValue());
-//
-//                } catch (InterruptedException | IOException e) {
-//                    e.printStackTrace();
-//                }
-//
 //                Util.sleepAndRefreshProject(currentProject);
-//
-//                TestCubeNotifier notifier = new TestCubeNotifier();
-////                TestClassJSON result = Util.getResultJSON(currentProject, testClass);
-//                TestClassBranchCoverageJSON coverageResult =
-//                        (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project, testClass);
-//                if (coverageResult.getTestCases() == null || coverageResult == null) {
-//                    notifier.notify(currentProject, "No new test cases found.",
-//                                    new InspectDSpotTerminalOutputAction());
-//                } else {
-//                    int amplifiedTestCasesCount = coverageResult.getTestCases().size();
-//
-//                    if (amplifiedTestCasesCount == 0) {
-//                        notifier.notify(currentProject, "Could find no new test cases through amplification.");
-//                    } else {
-//                        notifier.notify(currentProject,
-//                                        "Test Cube found " + amplifiedTestCasesCount + " amplified test cases.",
-//                                        // TODO: create a new Action for CFG
-//                                        new InspectResultWithCFGAction(currentProject, testClass, testMethod,
-//                                                                       new CFGPanel(cfgPanel), targetMethod),
-//                                        new InspectDSpotTerminalOutputAction());
-//                    }
-//                }
+                // popup about completion
+                List<String> expectedTests = Util.getExistingTestMethods(project,testClass, selectedBranch);
+                notifyDSpotFinished(currentProject, expectedTests);
+
             }
         };
 
         BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(dspotTask);
         ProgressManager.getInstance().runProcessWithProgressAsynchronously(dspotTask, processIndicator);
     }
+
     private void spawnDSpotProcess(DSpotStartConfiguration configuration, Project currentProject, String branch) {
         List<String> dSpotStarter = configuration.getCommandLineOptions(testClass, testMethod);
         dSpotStarter.set(10, "BranchCoverageSelector");
@@ -390,6 +229,50 @@ public class CFGWindow extends JPanel implements Disposable {
         dSpotStarter.add(targetMethod);
         dSpotStarter.add("--target-branch");
         dSpotStarter.add(branch);
+
+
+        ProcessBuilder processBuilder = prepareEnvironmentForSubprocess(dSpotStarter, currentProject, configuration);
+        try {
+            Process p = processBuilder.start();
+
+            File dSpotTerminalOutput = new File(
+                    Util.getTestCubeOutputPath(currentProject) + File.separator + "terminal_output_dspot.txt");
+
+            // write the output to the console and the file simultaneously, while the project is running
+            try (BufferedWriter writer =
+                         new BufferedWriter(new FileWriter(dSpotTerminalOutput, configuration.appendToLog()))) {
+                InputStream is = p.getInputStream();
+                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                for (String line = br.readLine(); line != null; line = br.readLine()) {
+                    System.out.println(line);
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+            p.waitFor();
+            System.out.println(p.exitValue());
+
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+        }
+
+        // try to avoid the newly generated files not being found by IntelliJ
+        Util.sleepAndRefreshProject(currentProject);
+    }
+
+    /**
+     * Sets up and starts the subprocess that runs DSpot or the prettifier.
+     * @param configuration the {@link DSpotStartConfiguration} to use, pass a
+     * {@link PrettifierStartConfiguration} to run the prettifier.
+     * @param currentProject the currently active project.
+     */
+    private void spawnDSpotProcess(DSpotStartConfiguration configuration, Project currentProject) {
+        List<String> dSpotStarter = configuration.getCommandLineOptions(testClass, testMethod);
+        dSpotStarter.set(27, "None");
+        dSpotStarter.remove("--filter-dev-friendly");
+        dSpotStarter.remove("--apply-extended-coverage-minimizer");
+        dSpotStarter.remove("--prioritize-most-coverage");
+        dSpotStarter.remove("--generate-descriptions");
 
 
         ProcessBuilder processBuilder = prepareEnvironmentForSubprocess(dSpotStarter, currentProject, configuration);
@@ -465,24 +348,26 @@ public class CFGWindow extends JPanel implements Disposable {
         return pb;
     }
 
-    private void notifyDSpotFinished(Project currentProject) {
+    private void notifyDSpotFinished(Project currentProject ,List<String> expectedTests) {
         TestCubeNotifier notifier = new TestCubeNotifier();
-        TestClassBranchCoverageJSON coverageResult =
-                (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project, testClass);
-        if (coverageResult.getTestCases() == null || coverageResult == null) {
+//        TestClassBranchCoverageJSON coverageResult =
+//                (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project, testClass, false);
+//        List<String> expectedTests = Util.getTargetTestMethods(coverageResult, selectedBranch);
+
+        if (expectedTests.isEmpty()) {
             notifier.notify(currentProject, "No new test cases found.",
                             new InspectDSpotTerminalOutputAction());
         } else {
-            int amplifiedTestCasesCount = coverageResult.getTestCases().size();
+            int amplifiedTestCasesCount = expectedTests.size();
 
             if (amplifiedTestCasesCount == 0) {
                 notifier.notify(currentProject, "Could find no new test cases through amplification.");
             } else {
                 notifier.notify(currentProject,
                                 "Test Cube found " + amplifiedTestCasesCount + " amplified test cases.",
-                                // TODO: create a new Action for CFG
                                 new InspectResultWithCFGAction(currentProject, testClass, testMethod,
-                                                               new CFGPanel(cfgPanel), targetMethod),
+                                                               new CFGPanel(cfgPanel), targetMethod,
+                                                               selectedBranch, expectedTests),
                                 new InspectDSpotTerminalOutputAction());
                     }
                 }

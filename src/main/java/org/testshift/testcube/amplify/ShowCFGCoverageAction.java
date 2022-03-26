@@ -54,7 +54,7 @@ public class ShowCFGCoverageAction extends NotificationAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event, @NotNull Notification notification) {
         TestClassBranchCoverageJSON coverageResult = (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project,
-                                                                                                              testClass.getQualifiedName());
+                                                                                                              testClass.getQualifiedName(), true);
         Set<String> initialCoveredLines = Util.getInitialCoveredLine(coverageResult);
         Set<Util.Branch> initialCoveredBranches = Util.getInitialCoveredBranch(coverageResult);
 

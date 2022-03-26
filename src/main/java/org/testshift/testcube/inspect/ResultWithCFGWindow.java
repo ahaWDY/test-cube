@@ -101,6 +101,8 @@ public class ResultWithCFGWindow extends Component {
     }
 
     private void showTestCaseInEditor(GeneratedTestCase testCase, TestCaseEditorField editor) {
+        //todo: add comment about the target branch
+        //todo: modify the method name containing the target branch
         editor.setText(testCase.getMethod().getText());
     }
 

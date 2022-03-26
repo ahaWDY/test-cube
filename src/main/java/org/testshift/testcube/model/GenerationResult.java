@@ -33,12 +33,14 @@ public class GenerationResult {
         this.initialCoveredLines = initialCoveredLines;
         this.initialCoveredBranches = initialCoveredBranches;
     }
-    public static GenerationResult buildGenerationResult(Project project, String testClass,
-                                                         Set<String> initialCoveredLines, Set<Util.Branch> initialCoveredBranches){
+    public static GenerationResult buildGenerationResult(Project project, String testClass, String targetBranch,
+                                                         Set<String> initialCoveredLines,
+                                                         Set<Util.Branch> initialCoveredBranches,
+                                                         List<String> expectedTests){
         GenerationResult result = new GenerationResult(project, testClass, initialCoveredLines,
                                                            initialCoveredBranches);
         TestClassBranchCoverageJSON coverageResult = (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project,
-                                                                                                              testClass);
+                                                                                                              testClass,false);
         if (coverageResult == null) {
             logger.warn("Json result file not found!");
             return result;
@@ -84,6 +86,13 @@ public class GenerationResult {
                                                                     .filter(tcj -> tcj.getName()
                                                                                       .equals(method.getName()))
                                                                     .findAny();
+                    // filter expected testCase
+                    if(result.generatedTestCases.size()== expectedTests.size()){
+                        break;
+                    }
+                    if(!expectedTests.contains(testCaseJSON.get().getName())){
+                        continue;
+                    }
 
                     Set<String> newCoveredLines = computeNewCoveredLines(testCaseJSON.get(), initialCoveredLines);
                     Set<Util.Branch> newCoveredBranches = computeNewCoveredBranches(testCaseJSON.get(),
@@ -135,4 +144,5 @@ public class GenerationResult {
     public PsiClass getOriginalClass() {
         return originalClass;
     }
+
 }

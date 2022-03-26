@@ -141,10 +141,6 @@ public class ShowCFGAction extends AnAction {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-//        TestCubeNotifier notifier = new TestCubeNotifier();
-//        notifier.notify(project, "Initial Coverage computing finished",
-//                        new ShowCFGCoverageAction(project, targetClass, targetMethod, testClass, testMethodsName,
-//                                                  moduleRootPath));
     }
 
     private String getMethodsString(PsiMethod[] testMethods) {
@@ -175,79 +171,10 @@ public class ShowCFGAction extends AnAction {
         }
         DSpotStartConfiguration configuration = new DSpotStartConfiguration(currentProject, moduleRootPath);
 
-//        Sdk projectSdk = ProjectRootManager.getInstance(currentProject).getProjectSdk();
-//
-//        if (projectSdk != null) {
-//            AppSettingsState.getInstance().javaJDKPath = projectSdk.getHomePath();
-//        }
-//
-//        if (AppSettingsState.getInstance().javaJDKPath.isEmpty()) {
-//            AskJavaPathDialogWrapper dialog = new AskJavaPathDialogWrapper();
-//            dialog.showAndGet();
-//            boolean pathValid = dialog.setJavaPathIfValid();
-//            // todo handle non valid
-//        }
-//
-//        // check if Gradle or Maven
-//        boolean isGradle = ExternalSystemApiUtil.isExternalSystemAwareModule(new ProjectSystemId("GRADLE"),
-//                                                                             ModuleManager.getInstance(currentProject)
-//                                                                                          .getModules()[0]);
-//        boolean isMaven = ExternalSystemApiUtil.isExternalSystemAwareModule(new ProjectSystemId("Maven"),
-//                                                                            ModuleManager.getInstance(currentProject)
-//                                                                                         .getModules()[0]);
-//
-//        String relativePathToClasses = "";
-//        String relativePathToTestClasses = "";
-//        String relativePathToSourceCode = "";
-//        String relativePathToTestCode = "";
-//        String automaticBuilder = "";
-//        if (isMaven) {
-//            relativePathToClasses = "target" + File.separator + "classes" + File.separator;
-//            relativePathToTestClasses = "target" + File.separator + "test-classes" + File.separator;
-//            relativePathToSourceCode = "src" + File.separator + "main" + File.separator + "java" + File.separator;
-//            relativePathToTestCode = "src" + File.separator + "test" + File.separator + "java" + File.separator;
-//            automaticBuilder = "Maven";
-//        } else {
-//            relativePathToClasses = "bin" + File.separator + "main" + File.separator;
-//            relativePathToTestClasses = "bin" + File.separator + "test" + File.separator;
-//            automaticBuilder = "Gradle";
-//            if (!isGradle) {
-//                logger.info("Neither Gradle nor Maven");
-//            }
-//        }
-//
-//        if (isMaven && AppSettingsState.getInstance().mavenHome.isEmpty()) {
-//            AskMavenHomeDialogWrapper dialog = new AskMavenHomeDialogWrapper();
-//            dialog.showAndGet();
-//            boolean mavenHomeValid = dialog.setMavenHomeIfValid();
-//            // todo handle non valid
-//        }
-//
-//        String javaHome = AppSettingsState.getInstance().javaJDKPath;
-//        String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
-//
-//        String pluginPath = PathManager.getPluginsPath();
-//        String dSpotPath = pluginPath + File.separator + "test-cube" + File.separator + "lib" + File.separator +
-//                           "dspot-3.1.1-SNAPSHOT-jar-with-dependencies.jar";
-//
-//        String finalRelativePathToClasses = relativePathToClasses;
-//        String finalRelativePathToTestClasses = relativePathToTestClasses;
-////        String finalRelativePathToSourceCode = relativePathToSourceCode;
-////        String finalRelativePathToTestCode = relativePathToTestCode;
-//        String finalAutomaticBuilder = automaticBuilder;
-
         Task.Backgroundable dspotTask = new Task.Backgroundable(currentProject, "Computing coverage", true) {
             public void run(@NotNull ProgressIndicator indicator) {
                 // clean output directory
 //                // todo close open amplification result windows or split output into different directories
-//                try {
-//                    File outputDirectory = new File(Util.getDSpotOutputPath(currentProject));
-//                    if (outputDirectory.exists()) {
-//                        FileUtils.cleanDirectory(outputDirectory);
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
                 File outputDir = new File(Util.getOutputSavePath(currentProject));
                 if (!outputDir.exists()) {
                     if (!outputDir.mkdirs()) {
@@ -259,118 +186,18 @@ public class ShowCFGAction extends AnAction {
                 spawnDSpotProcess(configuration, currentProject);
 
                 // save output
-                try {
-                    FileUtils.deleteDirectory(new File(Util.getOutputSavePath(currentProject)));
-                    Files.move(new File(Util.getDSpotOutputPath(currentProject)).toPath(),
-                               new File(Util.getOutputSavePath(currentProject)).toPath(),
-                               StandardCopyOption.REPLACE_EXISTING);
+//                try {
+//                    FileUtils.deleteDirectory(new File(Util.getOutputSavePath(currentProject)));
+//                    Files.move(new File(Util.getDSpotOutputPath(currentProject)).toPath(),
+//                               new File(Util.getOutputSavePath(currentProject)).toPath(),
+//                               StandardCopyOption.REPLACE_EXISTING);
 
-                    // prettify generated test cases
-//                    spawnDSpotProcess(prettifierConfiguration, currentProject);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
 
                 // popup about completion
                 notifyDSpotFinished(currentProject);
-
-//                String targetModule = "";
-//                if (isMaven) {
-//                    targetModule = moduleRootPath.replace(currentProject.getBasePath() + "/", "");
-//                }
-
-                // @formatter:off
-//                List<String> dSpotStarter = new ArrayList<>(Arrays.asList(javaBin, "-jar", dSpotPath,
-//                                                                          "--absolute-path-to-project-root", currentProject.getBasePath(),
-//                                                                          "--relative-path-to-classes", finalRelativePathToClasses,
-//                                                                          "--relative-path-to-test-classes", finalRelativePathToTestClasses,
-////                                                                          "--relative-path-to-source-code", finalRelativePathToSourceCode,
-////                                                                          "--relative-path-to-test-code", finalRelativePathToTestCode,
-//                                                                          "--test-criterion", "BranchCoverageSelector",
-//                                                                          "--amplifiers",
-//                                                                          "TargetMethodAdderOnExistingObjectsAmplifier,MethodDuplicationAmplifier,MethodRemoveAmplifier,FastLiteralAmplifier,MethodAdderOnExistingObjectsAmplifier,ReturnValueAmplifier,NullifierAmplifier,ArrayAmplifier",
-////                                                                          "--input-ampl-distributor", "RandomInputAmplDistributor",
-//                                                                          "--iteration", "1",
-//                                                                          "--test", testClassName,
-//                                                                          // TODO handlle null on testMethod
-//                                                                          "--test-cases", testMethodsName,
-//                                                                          "--target-class", targetClassName,
-//                                                                          "--target-method", targetMethodName,
-//                                                                          "--output-directory", Util.getDSpotOutputPath(currentProject),
-////                                                                          "--max-test-amplified", "25",
-//                                                                          "--automatic-builder", finalAutomaticBuilder,
-//                                                                          //"--generate-new-test-class",
-//                                                                          //"--keep-original-test-methods",
-//                                                                          "--verbose",
-//                                                                          "--dev-friendly",
-//                                                                          "--clean",
-//                                                                          "--with-comment=All"));
-//                // @formatter:on
-//
-////                if (!AppSettingsState.getInstance().generateAssertions) {
-////                    dSpotStarter.add("--only-input-amplification");
-////                }
-////                @NotNull Module[] modules = ModuleManager.getInstance(currentProject).getModules();
-////                if (modules.length > 1) {
-////                    dSpotStarter.add("--target-module");
-////                    dSpotStarter.add(targetModule);
-////                }
-//
-//                ProcessBuilder pb = new ProcessBuilder(dSpotStarter);
-//
-//                pb.environment().put("MAVEN_HOME", AppSettingsState.getInstance().mavenHome);
-//
-//                File workdir = new File(Util.getTestCubeOutputPath(currentProject) + File.separator + "workdir");
-//                if (!workdir.exists()) {
-//                    if (!workdir.mkdirs()) {
-//                        logger.error("Could not create workdir output directory!");
-//                    }
-//                }
-//                File workdirTarget = new File(workdir.getPath() + File.separator + "target" + File.separator + "dspot");
-//                if (!workdirTarget.exists()) {
-//                    if (!workdirTarget.mkdirs()) {
-//                        logger.error("Could not create workdir/target/dspot output directory!");
-//                    }
-//                }
-//                pb.directory(workdir);
-//
-//                pb.redirectErrorStream(true);
-//                try {
-//                    Process p = pb.start();
-//
-//                    File outputDir = new File(Util.getTestCubeOutputPath(currentProject));
-//                    if (!outputDir.exists()) {
-//                        if (!outputDir.mkdirs()) {
-//                            logger.error("Could not create Test Cube output directory!");
-//                        }
-//                    }
-//
-//                    File dSpotTerminalOutput = new File(
-//                            Util.getTestCubeOutputPath(currentProject) + File.separator + "terminal_output_dspot.txt");
-//
-//                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(dSpotTerminalOutput))) {
-//                        InputStream is = p.getInputStream();
-//                        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-//                        for (String line = br.readLine(); line != null; line = br.readLine()) {
-//                            System.out.println(line);
-//                            writer.write(line);
-//                            writer.newLine();
-//                        }
-//                    }
-//                    p.waitFor();
-//                    System.out.println(p.exitValue());
-//
-//                } catch (InterruptedException | IOException e) {
-//                    e.printStackTrace();
-//                }
-//
-//                Util.sleepAndRefreshProject(currentProject);
-//
-//                TestCubeNotifier notifier = new TestCubeNotifier();
-//                notifier.notify(currentProject, "Initial Coverage computing finished",
-//                                new ShowCFGCoverageAction(project, targetClass, targetMethod, testClass,
-//                                                          testMethodsName,
-//                                                          moduleRootPath));
             }
         };
 

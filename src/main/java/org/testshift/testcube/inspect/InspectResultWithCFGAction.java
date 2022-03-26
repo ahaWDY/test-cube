@@ -15,22 +15,28 @@ import org.testshift.testcube.icons.TestCubeIcons;
 import org.testshift.testcube.misc.Util;
 import org.testshift.testcube.model.GenerationResult;
 
+import java.util.List;
+
 public class InspectResultWithCFGAction extends NotificationAction {
     private final Project project;
     private final String testClass;
     private final String testMethod;
     private CFGPanel cfgPanel;
     private String targetMethod;
+    private String targetBranch;
+    private List<String> expectedTests;
 
 
     public InspectResultWithCFGAction(Project project, String testClass, String testMethod, CFGPanel cfgPanel,
-                                      String targetMethod) {
+                                      String targetMethod, String targetBranch, List<String> expectedTests) {
         super("Inspect amplification results");
         this.project = project;
         this.testClass = testClass;
         this.testMethod = testMethod;
         this.targetMethod = targetMethod;
+        this.targetBranch = targetBranch;
         this.cfgPanel = cfgPanel;
+        this.expectedTests = expectedTests;
     }
 
     @Override
@@ -42,9 +48,9 @@ public class InspectResultWithCFGAction extends NotificationAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        GenerationResult generationResult = GenerationResult.buildGenerationResult(project, testClass,
+        GenerationResult generationResult = GenerationResult.buildGenerationResult(project, testClass, targetBranch,
                                                                                    cfgPanel.getInitialCoveredLines(),
-                                                                                   cfgPanel.getInitialCoveredBranches());
+                                                                                   cfgPanel.getInitialCoveredBranches(), expectedTests);
 
         ResultWithCFGWindow resultWithCFGWindow = new ResultWithCFGWindow(cfgPanel, targetMethod, generationResult);
 

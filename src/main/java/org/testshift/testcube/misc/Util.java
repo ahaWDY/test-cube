@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
+import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.TestCaseBranchCoverageJSON;
 import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.TestClassBranchCoverageJSON;
 import eu.stamp_project.dspot.common.report.output.selector.extendedcoverage.json.TestClassJSON;
 import eu.stamp_project.dspot.selector.branchcoverageselector.BranchCoverage;
@@ -14,10 +15,7 @@ import eu.stamp_project.prettifier.output.report.ReportJSON;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 
 public class Util {
@@ -92,9 +90,15 @@ public class Util {
         return null;
     }
 
-    public static TestClassBranchCoverageJSON getBranchCoverageJSON(Project project, String testClass) {
+    public static TestClassBranchCoverageJSON getBranchCoverageJSON(Project project, String testClass,
+                                                                    boolean initial) {
         Gson gson = new Gson();
         try {
+            if(initial){
+                return gson.fromJson(new FileReader(
+                                             getDSpotOutputPath(project) + File.separator + testClass + "_report.json"),
+                                     TestClassBranchCoverageJSON.class);
+            }
             return gson.fromJson(new FileReader(
                                          getOutputSavePath(project) + File.separator + testClass + "_report.json"),
                                  TestClassBranchCoverageJSON.class);
@@ -102,6 +106,50 @@ public class Util {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static List<String> getTargetTestMethods(TestClassBranchCoverageJSON coverageResult, String targetBranch){
+        List<String> testMethodNames = new ArrayList<>();
+        for(TestCaseBranchCoverageJSON testCase: coverageResult.getTestCases()){
+           if(containBranch(testCase, targetBranch)){
+               testMethodNames.add(testCase.getName());
+           }
+       }
+        return testMethodNames;
+    }
+
+    public static List<String> getExistingTestMethods(Project project, String testClass,String targetBranch){
+        List<String> testMethodNames = new ArrayList<>();
+        TestClassBranchCoverageJSON coverageResult =
+                (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project, testClass, false);
+        if(coverageResult==null){
+            return testMethodNames;
+        }
+        return getTargetTestMethods(coverageResult, targetBranch);
+    }
+
+    private static boolean containBranch(TestCaseBranchCoverageJSON testCaseJSON, String targetBranch) {
+        if(targetBranch.equals("noBranch")){
+            if (testCaseJSON.getLineCoverageList().isEmpty()) {
+                return false;
+            }
+            return true;
+        }
+        // valid branch
+        String[] splits = targetBranch.split(":");
+        int branchLine = Integer.valueOf(splits[0]).intValue();
+        int symbol = targetBranch.contains("True") ? 1 : 0;
+        if (symbol == 0) {
+            if (testCaseJSON.getBranchCoverageList().stream().filter(branchCoverage -> branchCoverage.getRegion().getStartLine() == branchLine && branchCoverage.getFalseHitCount() > 0).findAny().isPresent()){
+                return true;
+            }
+        }
+        else{
+            if (testCaseJSON.getBranchCoverageList().stream().filter(branchCoverage -> branchCoverage.getRegion().getStartLine() == branchLine && branchCoverage.getTrueHitCount() > 0).findAny().isPresent()){
+                return true;
+            }
+        }
+        return false;
     }
 
     public static Set<String> getInitialCoveredLine(TestClassBranchCoverageJSON result){
