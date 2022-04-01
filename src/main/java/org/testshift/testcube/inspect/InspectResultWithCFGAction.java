@@ -11,6 +11,7 @@ import com.intellij.ui.content.ContentFactory;
 import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.TestClassBranchCoverageJSON;
 import org.jetbrains.annotations.NotNull;
 import org.testshift.testcube.branches.CFGPanel;
+import org.testshift.testcube.branches.CFGWindow;
 import org.testshift.testcube.icons.TestCubeIcons;
 import org.testshift.testcube.misc.Util;
 import org.testshift.testcube.model.GenerationResult;
@@ -21,13 +22,14 @@ public class InspectResultWithCFGAction extends NotificationAction {
     private final Project project;
     private final String testClass;
     private final String testMethod;
-    private CFGPanel cfgPanel;
+//    private CFGPanel cfgPanel;
+    private CFGWindow cfgWindow;
     private String targetMethod;
     private String targetBranch;
     private List<String> expectedTests;
 
 
-    public InspectResultWithCFGAction(Project project, String testClass, String testMethod, CFGPanel cfgPanel,
+    public InspectResultWithCFGAction(Project project, String testClass, String testMethod, CFGWindow cfgWindow,
                                       String targetMethod, String targetBranch, List<String> expectedTests) {
         super("Inspect amplification results");
         this.project = project;
@@ -35,7 +37,8 @@ public class InspectResultWithCFGAction extends NotificationAction {
         this.testMethod = testMethod;
         this.targetMethod = targetMethod;
         this.targetBranch = targetBranch;
-        this.cfgPanel = cfgPanel;
+//        this.cfgPanel = cfgPanel;
+        this.cfgWindow = cfgWindow;
         this.expectedTests = expectedTests;
     }
 
@@ -49,10 +52,11 @@ public class InspectResultWithCFGAction extends NotificationAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         GenerationResult generationResult = GenerationResult.buildGenerationResult(project, testClass, targetBranch,
-                                                                                   cfgPanel.getInitialCoveredLines(),
-                                                                                   cfgPanel.getInitialCoveredBranches(), expectedTests);
+                                                                                   cfgWindow.getCfgPanel().getInitialCoveredLines(),
+                                                                                   cfgWindow.getCfgPanel().getInitialCoveredBranches(),
+                                                                                   expectedTests);
 
-        ResultWithCFGWindow resultWithCFGWindow = new ResultWithCFGWindow(cfgPanel, targetMethod, generationResult);
+        ResultWithCFGWindow resultWithCFGWindow = new ResultWithCFGWindow(cfgWindow, targetMethod, generationResult);
 
         ToolWindow toolWindow = ToolWindowManager.getInstance(e.getProject()).getToolWindow("Test Cube");
         if (toolWindow != null) {

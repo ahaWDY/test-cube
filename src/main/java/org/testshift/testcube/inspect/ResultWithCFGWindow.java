@@ -13,6 +13,7 @@ import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.
 import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.TestClassBranchCoverageJSON;
 import org.jetbrains.annotations.Contract;
 import org.testshift.testcube.branches.CFGPanel;
+import org.testshift.testcube.branches.CFGWindow;
 import org.testshift.testcube.branches.rendering.RenderCommand;
 import org.testshift.testcube.misc.Colors;
 import org.testshift.testcube.misc.TestCubeNotifier;
@@ -39,8 +40,14 @@ public class ResultWithCFGWindow extends Component {
     private JButton next;
     private JButton previous;
     private JButton close;
-    private CFGPanel cfgPanel;
     private JPanel testCasePanel;
+
+//    private static JPanel contentPanel;
+//    private CFGPanel cfgPanel;
+//    private JPanel selectionPanel;
+//    private JButton finish;
+
+    private CFGWindow cfgWindow;
 
     private int currentAmplificationTestCaseIndex;
     GeneratedTestCase currentTestCase;
@@ -49,24 +56,36 @@ public class ResultWithCFGWindow extends Component {
     private GenerationResult generationResult;
 
 
-    public ResultWithCFGWindow(CFGPanel cfgPanel, String targetMethod, GenerationResult generationResult){
+    public ResultWithCFGWindow(CFGWindow cfgWindow, String targetMethod, GenerationResult generationResult){
 //        this();
         this.amplificationResultPanel = new JPanel();
 
-        this.cfgPanel = cfgPanel;
+//        this.cfgPanel = cfgPanel;
+//        this.selectionPanel = new JPanel();
+//        this.finish = new JButton("Continue");
+//        finish.addActionListener(l->finishSelection(project));
+        this.cfgWindow = cfgWindow;
+
         this.targetMethod = targetMethod;
         this.currentAmplificationTestCaseIndex = 0;
         this.generationResult = generationResult;
         this.currentTestCase = generationResult.generatedTestCases.get(
                 currentAmplificationTestCaseIndex);
 
-        cfgPanel.render(RenderCommand.Reason.FILE_SWITCHED);
-        cfgPanel.displayResult(RenderCommand.Reason.FILE_SWITCHED);
-        cfgPanel.maintainInitialCover();
-        cfgPanel.setNewCoveredLines(currentTestCase.newCoveredLine);
-        cfgPanel.setNewCoveredBranches(currentTestCase.newCovredBranch);
-        cfgPanel.maintainNewCover();
-        cfgPanel.setLayout(new GridLayout());
+//        cfgPanel.render(RenderCommand.Reason.FILE_SWITCHED);
+//        cfgPanel.displayResult(RenderCommand.Reason.FILE_SWITCHED);
+//        cfgPanel.maintainInitialCover();
+//        cfgPanel.setNewCoveredLines(currentTestCase.newCoveredLine);
+//        cfgPanel.setNewCoveredBranches(currentTestCase.newCovredBranch);
+//        cfgPanel.maintainNewCover();
+//        cfgPanel.setLayout(new GridLayout());
+        cfgWindow.getCfgPanel().render(RenderCommand.Reason.FILE_SWITCHED);
+        cfgWindow.getCfgPanel().displayResult(RenderCommand.Reason.FILE_SWITCHED);
+        cfgWindow.getCfgPanel().maintainInitialCover();
+        cfgWindow.getCfgPanel().setNewCoveredLines(currentTestCase.newCoveredLine);
+        cfgWindow.getCfgPanel().setNewCoveredBranches(currentTestCase.newCovredBranch);
+        cfgWindow.getCfgPanel().maintainNewCover();
+        cfgWindow.getCfgPanel().setLayout(new GridLayout());
 
         amplifiedTestCase = new TestCaseEditorField();
         amplifiedTestCase.createEditor();
@@ -97,7 +116,9 @@ public class ResultWithCFGWindow extends Component {
         amplificationResultPanel.setVisible(true);
         amplificationResultPanel.setLayout(new BorderLayout());
         amplificationResultPanel.add(testCasePanel, BorderLayout.NORTH);
-        amplificationResultPanel.add(cfgPanel, BorderLayout.CENTER);
+//        amplificationResultPanel.add(cfgPanel, BorderLayout.CENTER);
+        amplificationResultPanel.add(cfgWindow.getContent(), BorderLayout.CENTER);
+//        amplificationResultPanel.add(cfgWindow.getButtonPanel(), BorderLayout.SOUTH);
     }
 
     private void showTestCaseInEditor(GeneratedTestCase testCase, TestCaseEditorField editor) {
@@ -111,6 +132,7 @@ public class ResultWithCFGWindow extends Component {
         if (!forward & removeCurrent) throw new IllegalArgumentException();
 
         if (removeCurrent) {
+            //todo: remove also from the coverage json file
             generationResult.generatedTestCases.remove(currentTestCase);
             currentAmplificationTestCaseIndex--;
             if (generationResult.generatedTestCases.isEmpty()) {
@@ -135,9 +157,9 @@ public class ResultWithCFGWindow extends Component {
             }
         }
         currentTestCase = generationResult.generatedTestCases.get(currentAmplificationTestCaseIndex);
-        cfgPanel.setNewCoveredLines(currentTestCase.newCoveredLine);
-        cfgPanel.setNewCoveredBranches(currentTestCase.newCovredBranch);
-        cfgPanel.maintainNewCover();
+        cfgWindow.getCfgPanel().setNewCoveredLines(currentTestCase.newCoveredLine);
+        cfgWindow.getCfgPanel().setNewCoveredBranches(currentTestCase.newCovredBranch);
+        cfgWindow.getCfgPanel().maintainNewCover();
         showTestCaseInEditor(currentTestCase, amplifiedTestCase);
 //        setAmplifiedInformation();
         // deal with cfgPanel
@@ -193,9 +215,6 @@ public class ResultWithCFGWindow extends Component {
         navigateTestCases(false, false);
     }
 
-//    private void setAmplifiedInformation() {
-//        amplifiedInformation.setText(htmlStart() + currentTestCase.getDescription() + htmlEnd());
-//    }
 
     private String htmlStart() {
         Color foreground = JBColor.foreground();

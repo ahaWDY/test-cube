@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.checkout.ProjectCheckoutListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.TestClassBranchCoverageJSON;
@@ -25,6 +26,7 @@ import eu.stamp_project.dspot.common.report.output.selector.extendedcoverage.jso
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.testshift.testcube.amplify.*;
+import org.testshift.testcube.branches.preview.image.links.Highlighter;
 import org.testshift.testcube.branches.rendering.ImageFormat;
 import org.testshift.testcube.branches.rendering.RenderCommand;
 import org.testshift.testcube.inspect.InspectResultWithCFGAction;
@@ -61,32 +63,33 @@ public class CFGWindow extends JPanel implements Disposable {
     private String moduleRootPath;
     private String testClass;
     private String testMethod;
-    private Set<String> initialCoveredLines;
-    private Set<Util.Branch> initialCoveredBranches;
+//    private Set<String> initialCoveredLines;
+//    private Set<Util.Branch> initialCoveredBranches;
 
     private int branchNum;
+    private int startLine;
     private String selectedBranch;
 
     public CFGWindow(Project project, String targetClass, String targetMethod, String source,
                      Set<String> initialCoveredLines,
-                     Set<Util.Branch> initialCoverdBranches,
-                     String moduleRootPath, String testClass, String testMethod, int branchNum){
+                     Set<Util.Branch> initialCoveredBranches,
+                     String moduleRootPath, String testClass, String testMethod, int branchNum, int startLine){
         this.project = project;
         this.targetClass = targetClass;
         this.targetMethod = targetMethod;
         this.moduleRootPath = moduleRootPath;
         this.testClass = testClass;
         this.testMethod = testMethod;
-        this.initialCoveredLines = initialCoveredLines;
-        this.initialCoveredBranches = initialCoverdBranches;
+//        this.initialCoveredLines = initialCoveredLines;
+//        this.initialCoveredBranches = initialCoveredBranches;
         this.branchNum = branchNum;
+        this.startLine = startLine;
 
         this.contentPanel = new JPanel();
         this.buttonPanel = new JPanel();
         this.finish = new JButton("Ok");
         this.close = new JButton("Close");
-//        this.cfgPanel = cfgPanel;
-//        this.buttonPanel = buttonPanel;
+
         ImageFormat imageFormat = ImageFormat.PNG;
         int page = 0;
         int version = 0;
@@ -96,7 +99,7 @@ public class CFGWindow extends JPanel implements Disposable {
         cfgPanel.displayResult(reason);
         cfgPanel.maintainInitialCover();
         cfgPanel.setLayout(new GridLayout());
-        finish.addActionListener(l->finishSelection(project));
+        finish.addActionListener(l-> finishSelection(project));
         close.addActionListener(l->cancel());
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
         buttonPanel.add(finish);
@@ -105,11 +108,10 @@ public class CFGWindow extends JPanel implements Disposable {
         contentPanel.setLayout(new BorderLayout());
         contentPanel.add(cfgPanel, BorderLayout.CENTER);
         contentPanel.add(buttonPanel, BorderLayout.SOUTH);
-//        contentPanel.setVisible(true);
     }
 
     private void cancel() {
-        dispose();
+        close(project, true);
     }
 
 
@@ -117,7 +119,18 @@ public class CFGWindow extends JPanel implements Disposable {
         return contentPanel;
     }
 
+    public CFGPanel getCfgPanel() {
+        return cfgPanel;
+    }
+
+    public JPanel getButtonPanel() {
+        return buttonPanel;
+    }
+
     public String getDisplayName(){
+        if(cfgPanel.getNewCoveredBranches()!=null || cfgPanel.getNewCoveredLines()!=null){
+            return "Test Generation for " + targetMethod+  "()'";
+        }
         return "Control Flow Graph of "+ targetMethod;
     }
 
@@ -126,8 +139,9 @@ public class CFGWindow extends JPanel implements Disposable {
             cfgPanel.recordHilight();
             selectedBranch = cfgPanel.getHilightText();
             if (!selectedBranch.equals("")) {
-                //todo: first find in previous generation
-                List<String> expectedTests = Util.getExistingTestMethods(project, testClass, selectedBranch);
+                //todo: cancel highlight
+                new Highlighter().highlightImages(cfgPanel.getImagesPanel(), selectedBranch);
+                List<String> expectedTests = Util.getExistingTestMethods(project, testClass, selectedBranch, startLine);
                 if(expectedTests.isEmpty()) {
                     try {
                         runDSpot(project, selectedBranch);
@@ -136,8 +150,9 @@ public class CFGWindow extends JPanel implements Disposable {
                     }
                 }
                 else{
-                    notifyDSpotFinished(project, expectedTests);
+                    runDspotForCoverage(project,expectedTests);
                 }
+                close(project,false);
             }
             else {
                 NoSelectionDialog dialog = new NoSelectionDialog();
@@ -147,23 +162,49 @@ public class CFGWindow extends JPanel implements Disposable {
         }
         else{
             selectedBranch = "noBranch";
-            List<String> expectedTests = Util.getExistingTestMethods(project, testClass, selectedBranch);
-            if(expectedTests.isEmpty()) {
-                try {
-                    runDSpot(project, selectedBranch);
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
+            if(cfgPanel.getInitialCoveredLines().isEmpty()) {
+                List<String> expectedTests = Util.getExistingTestMethods(project, testClass, selectedBranch, startLine);
+                if (expectedTests.isEmpty()) {
+                    try {
+                        runDSpot(project, selectedBranch);
+                    } catch (IOException | InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    runDspotForCoverage(project, expectedTests);
                 }
+                close(project,false);
             }
             else{
-                notifyDSpotFinished(project, expectedTests);
+                close(project,true);
             }
         }
-
-        dispose();
     }
 
-    public void runDSpot(Project currentProject, String branch) throws IOException, InterruptedException {
+    private void updateInitialCoverage() {
+        DSpotStartConfiguration configuration = new DSpotStartConfiguration(project, moduleRootPath);
+        spawnDSpotProcess(configuration, project, selectedBranch, true);
+        TestClassBranchCoverageJSON coverageResult = (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project,
+                                                                                                              testClass, true);
+        Set<String> initialCoveredLines = Util.getInitialCoveredLine(coverageResult);
+        Set<Util.Branch> initialCoveredBranches = Util.getInitialCoveredBranch(coverageResult);
+        this.cfgPanel.maintainNewInitialCover(initialCoveredLines, initialCoveredBranches);
+    }
+
+    private void runDspotForCoverage(Project currentProject, List<String> expectedTests){
+        Task.Backgroundable dspotTask = new Task.Backgroundable(currentProject, "Amplifying test", true) {
+            public void run(@NotNull ProgressIndicator indicator) {
+                if(cfgPanel.getNewCoveredBranches()!=null || cfgPanel.getNewCoveredLines()!=null) {
+                    updateInitialCoverage();
+                }
+                notifyDSpotFinished(project, expectedTests);
+            }
+        };
+        BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(dspotTask);
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(dspotTask, processIndicator);
+    }
+
+    private void runDSpot(Project currentProject, String branch) throws IOException, InterruptedException {
 
         IdeaPluginDescriptor testCubePlugin = PluginManagerCore.getPlugin(PluginId.getId("org.testshift.testcube"));
         if (testCubePlugin != null) {
@@ -185,8 +226,12 @@ public class CFGWindow extends JPanel implements Disposable {
                         logger.error("Could not create TestCube output directory!");
                     }
                 }
+                // update Initial Coverage is it's result window
+                if(cfgPanel.getNewCoveredBranches()!=null || cfgPanel.getNewCoveredLines()!=null){
+                    updateInitialCoverage();
+                }
 
-                spawnDSpotProcess(configuration, currentProject, branch);
+                spawnDSpotProcess(configuration, currentProject, branch, false);
 
                 // save output
                 try {
@@ -208,9 +253,8 @@ public class CFGWindow extends JPanel implements Disposable {
 
 //                Util.sleepAndRefreshProject(currentProject);
                 // popup about completion
-                List<String> expectedTests = Util.getExistingTestMethods(project,testClass, selectedBranch);
+                List<String> expectedTests = Util.getExistingTestMethods(project,testClass, selectedBranch, startLine);
                 notifyDSpotFinished(currentProject, expectedTests);
-
             }
         };
 
@@ -218,7 +262,8 @@ public class CFGWindow extends JPanel implements Disposable {
         ProgressManager.getInstance().runProcessWithProgressAsynchronously(dspotTask, processIndicator);
     }
 
-    private void spawnDSpotProcess(DSpotStartConfiguration configuration, Project currentProject, String branch) {
+    private void spawnDSpotProcess(DSpotStartConfiguration configuration, Project currentProject, String branch,
+                                   boolean forCoverage) {
         List<String> dSpotStarter = configuration.getCommandLineOptions(testClass, testMethod);
         dSpotStarter.set(10, "BranchCoverageSelector");
         dSpotStarter.set(20, Config.AMPLIFIERS_TARGET);
@@ -227,8 +272,10 @@ public class CFGWindow extends JPanel implements Disposable {
         dSpotStarter.add(targetClass);
         dSpotStarter.add("--target-method");
         dSpotStarter.add(targetMethod);
-        dSpotStarter.add("--target-branch");
-        dSpotStarter.add(branch);
+        if(! forCoverage) {
+            dSpotStarter.add("--target-branch");
+            dSpotStarter.add(branch);
+        }
 
 
         ProcessBuilder processBuilder = prepareEnvironmentForSubprocess(dSpotStarter, currentProject, configuration);
@@ -366,18 +413,19 @@ public class CFGWindow extends JPanel implements Disposable {
                 notifier.notify(currentProject,
                                 "Test Cube found " + amplifiedTestCasesCount + " amplified test cases.",
                                 new InspectResultWithCFGAction(currentProject, testClass, testMethod,
-                                                               new CFGPanel(cfgPanel), targetMethod,
+                                                               this,
+                                                               targetMethod,
                                                                selectedBranch, expectedTests),
                                 new InspectDSpotTerminalOutputAction());
                     }
                 }
     }
 
-    private void close(Project project) {
+    private void close(Project project, boolean dispose) {
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Test Cube");
         if (toolWindow != null) {
             toolWindow.getContentManager()
-                      .removeContent(toolWindow.getContentManager().findContent(getDisplayName()), true);
+                      .removeContent(toolWindow.getContentManager().findContent(getDisplayName()), dispose);
             if (toolWindow.getContentManager().getContentCount() == 0) {
                 toolWindow.hide();
             }
@@ -386,13 +434,6 @@ public class CFGWindow extends JPanel implements Disposable {
 
     @Override
     public void dispose() {
-        buttonPanel.removeAll();
-        cfgPanel.dispose();
-        for(Component component: contentPanel.getComponents()){
-            if (component instanceof Disposable) {
-                Disposer.dispose((Disposable) component);
-            }
-        }
-        close(project);
+        close(project, true);
     }
 }

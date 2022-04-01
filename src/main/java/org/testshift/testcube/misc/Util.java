@@ -108,44 +108,49 @@ public class Util {
         return null;
     }
 
-    public static List<String> getTargetTestMethods(TestClassBranchCoverageJSON coverageResult, String targetBranch){
+    public static List<String> getTargetTestMethods(TestClassBranchCoverageJSON coverageResult, String targetBranch,
+                                                    int startLine){
         List<String> testMethodNames = new ArrayList<>();
         for(TestCaseBranchCoverageJSON testCase: coverageResult.getTestCases()){
-           if(containBranch(testCase, targetBranch)){
+           if(containBranch(testCase, targetBranch, startLine)){
                testMethodNames.add(testCase.getName());
            }
        }
         return testMethodNames;
     }
 
-    public static List<String> getExistingTestMethods(Project project, String testClass,String targetBranch){
+    public static List<String> getExistingTestMethods(Project project, String testClass,String targetBranch,
+                                                      int startLine){
         List<String> testMethodNames = new ArrayList<>();
         TestClassBranchCoverageJSON coverageResult =
                 (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project, testClass, false);
         if(coverageResult==null){
             return testMethodNames;
         }
-        return getTargetTestMethods(coverageResult, targetBranch);
+        return getTargetTestMethods(coverageResult, targetBranch, startLine);
     }
 
-    private static boolean containBranch(TestCaseBranchCoverageJSON testCaseJSON, String targetBranch) {
+    private static boolean containBranch(TestCaseBranchCoverageJSON testCaseJSON, String targetBranch, int startLine) {
         if(targetBranch.equals("noBranch")){
-            if (testCaseJSON.getLineCoverageList().isEmpty()) {
+            if (testCaseJSON.getLineCoverageList()==null || testCaseJSON.getLineCoverageList().isEmpty()) {
                 return false;
             }
-            return true;
+            if(testCaseJSON.getLineCoverageList().stream().filter(lineCoverage -> lineCoverage.getLine()==startLine).findAny().isPresent()) {
+                return true;
+            }
+            return false;
         }
         // valid branch
         String[] splits = targetBranch.split(":");
         int branchLine = Integer.valueOf(splits[0]).intValue();
         int symbol = targetBranch.contains("True") ? 1 : 0;
         if (symbol == 0) {
-            if (testCaseJSON.getBranchCoverageList().stream().filter(branchCoverage -> branchCoverage.getRegion().getStartLine() == branchLine && branchCoverage.getFalseHitCount() > 0).findAny().isPresent()){
+            if (testCaseJSON.getBranchCoverageList()!=null && testCaseJSON.getBranchCoverageList().stream().filter(branchCoverage -> branchCoverage.getRegion().getStartLine() == branchLine && branchCoverage.getFalseHitCount() > 0).findAny().isPresent()){
                 return true;
             }
         }
         else{
-            if (testCaseJSON.getBranchCoverageList().stream().filter(branchCoverage -> branchCoverage.getRegion().getStartLine() == branchLine && branchCoverage.getTrueHitCount() > 0).findAny().isPresent()){
+            if (testCaseJSON.getBranchCoverageList()!=null && testCaseJSON.getBranchCoverageList().stream().filter(branchCoverage -> branchCoverage.getRegion().getStartLine() == branchLine && branchCoverage.getTrueHitCount() > 0).findAny().isPresent()){
                 return true;
             }
         }

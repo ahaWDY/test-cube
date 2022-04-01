@@ -90,7 +90,7 @@ public class ShowCFGCoverageAction extends NotificationAction {
 
         CFGWindow cfgWindow = new CFGWindow(project, targetClassName, targetMethodName, source, initialCoveredLines,
                                             initialCoveredBranches, moduleRootPath, testClassName, testMethods,
-                                            branchNum);
+                                            branchNum, lineNumber + 1);
 
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Test Cube");
 

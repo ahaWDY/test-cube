@@ -304,6 +304,7 @@ public class CFGPanel extends JPanel implements Disposable{
     }
 
     public void recordHilight(){
+        hilightText = "";
         for(Component component: imagesPanel.getComponents())
         {
             if(component instanceof ImageContainerPng){
@@ -326,7 +327,13 @@ public class CFGPanel extends JPanel implements Disposable{
     }
 
     public void maintainInitialCover(){
-        highlighter.coverInitialLinesAndBranches(imagesPanel, initialCoveredLines, initialCoveredBranches);
+        highlighter.coverInitialLinesAndBranches(imagesPanel, this.initialCoveredLines, this.initialCoveredBranches);
+    }
+
+    public void maintainNewInitialCover(Set<String> initialCoveredLines, Set<Util.Branch> initialCoveredBranches){
+        this.initialCoveredLines = initialCoveredLines;
+        this.initialCoveredBranches = initialCoveredBranches;
+        this.maintainInitialCover();
     }
 
     public void maintainNewCover(){
@@ -386,6 +393,14 @@ public class CFGPanel extends JPanel implements Disposable{
 
     public Set<Util.Branch> getInitialCoveredBranches() {
         return initialCoveredBranches;
+    }
+
+    public Set<Util.Branch> getNewCoveredBranches() {
+        return newCoveredBranches;
+    }
+
+    public Set<String> getNewCoveredLines() {
+        return newCoveredLines;
     }
 
     public void setNewCoveredLines(Set<String> newCoveredLines) {
