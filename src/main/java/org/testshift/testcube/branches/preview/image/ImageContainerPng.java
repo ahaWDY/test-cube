@@ -190,4 +190,14 @@ public class ImageContainerPng extends JLabel{
             }
         }
     }
+
+    public void markBranch() {
+        Component[] components = this.getComponents();
+        for (Component component : components) {
+            MyJLabel jLabel = (MyJLabel) component;
+            if(jLabel.isBranch() && !jLabel.isCovered() && !jLabel.isNewCovered()) {
+                jLabel.markBranch();
+            }
+        }
+    }
 }

@@ -15,6 +15,9 @@ import eu.stamp_project.prettifier.output.report.ReportJSON;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -108,26 +111,39 @@ public class Util {
         return null;
     }
 
-    public static List<String> getTargetTestMethods(TestClassBranchCoverageJSON coverageResult, String targetBranch,
-                                                    int startLine){
+    public static List<String> getTargetTestMethods(Project project, TestClassBranchCoverageJSON coverageResult,
+                                                    String testClass,
+                                                    String targetBranch,
+                                                    int startLine) throws IOException {
         List<String> testMethodNames = new ArrayList<>();
         for(TestCaseBranchCoverageJSON testCase: coverageResult.getTestCases()){
-           if(containBranch(testCase, targetBranch, startLine)){
+           if(containTestMethod(project,testCase, testClass) && containBranch(testCase, targetBranch, startLine)){
                testMethodNames.add(testCase.getName());
            }
        }
         return testMethodNames;
     }
 
+    private static boolean containTestMethod(Project project,TestCaseBranchCoverageJSON testCase, String testClass) throws IOException {
+        String testMethodName = testCase.getName();
+        String amplifiedTestClassPath = getAmplifiedTestClassPathToPrettify(project, testClass);
+        String data = "";
+        data = new String(Files.readAllBytes(Paths.get(amplifiedTestClassPath)));
+        if(data.contains(testCase.getName())){
+            return true;
+        }
+        return false;
+    }
+
     public static List<String> getExistingTestMethods(Project project, String testClass,String targetBranch,
-                                                      int startLine){
+                                                      int startLine) throws IOException {
         List<String> testMethodNames = new ArrayList<>();
         TestClassBranchCoverageJSON coverageResult =
                 (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project, testClass, false);
-        if(coverageResult==null){
+        if(coverageResult==null||coverageResult.getTestCases()==null){
             return testMethodNames;
         }
-        return getTargetTestMethods(coverageResult, targetBranch, startLine);
+        return getTargetTestMethods(project, coverageResult, testClass, targetBranch, startLine);
     }
 
     private static boolean containBranch(TestCaseBranchCoverageJSON testCaseJSON, String targetBranch, int startLine) {

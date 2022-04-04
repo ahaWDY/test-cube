@@ -99,7 +99,13 @@ public class CFGWindow extends JPanel implements Disposable {
         cfgPanel.displayResult(reason);
         cfgPanel.maintainInitialCover();
         cfgPanel.setLayout(new GridLayout());
-        finish.addActionListener(l-> finishSelection(project));
+        finish.addActionListener(l-> {
+            try {
+                finishSelection(project);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
         close.addActionListener(l->cancel());
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
         buttonPanel.add(finish);
@@ -134,7 +140,7 @@ public class CFGWindow extends JPanel implements Disposable {
         return "Control Flow Graph of "+ targetMethod;
     }
 
-    private void finishSelection(Project project) {
+    private void finishSelection(Project project) throws IOException {
         if(branchNum>0) {
             cfgPanel.recordHilight();
             selectedBranch = cfgPanel.getHilightText();
@@ -253,7 +259,12 @@ public class CFGWindow extends JPanel implements Disposable {
 
 //                Util.sleepAndRefreshProject(currentProject);
                 // popup about completion
-                List<String> expectedTests = Util.getExistingTestMethods(project,testClass, selectedBranch, startLine);
+                List<String> expectedTests = null;
+                try {
+                    expectedTests = Util.getExistingTestMethods(project, testClass, selectedBranch, startLine);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 notifyDSpotFinished(currentProject, expectedTests);
             }
         };
@@ -402,7 +413,8 @@ public class CFGWindow extends JPanel implements Disposable {
 //        List<String> expectedTests = Util.getTargetTestMethods(coverageResult, selectedBranch);
 
         if (expectedTests.isEmpty()) {
-            notifier.notify(currentProject, "No new test cases found.",
+            notifier.notify(currentProject,
+                            "No new test cases found. Please write one test method manually for " + targetMethod,
                             new InspectDSpotTerminalOutputAction());
         } else {
             int amplifiedTestCasesCount = expectedTests.size();

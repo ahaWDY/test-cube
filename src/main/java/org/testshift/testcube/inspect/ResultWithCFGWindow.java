@@ -139,7 +139,7 @@ public class ResultWithCFGWindow extends Component {
                 TestCubeNotifier notifier = new TestCubeNotifier();
                 notifier.notify(generationResult.project,
                                 "All generated test cases were added or ignored. Thank you for using Test Cube!");
-                close();
+//                close();
                 return;
             }
         }

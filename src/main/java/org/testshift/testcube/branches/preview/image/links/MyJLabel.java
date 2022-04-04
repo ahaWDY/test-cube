@@ -19,6 +19,7 @@ public class MyJLabel extends JLabel {
     private static final CompoundBorder COVERBORDER = getCoverBorder();
     private static final CompoundBorder HIGHLIGHT = getCompoundBorder();
     private static final CompoundBorder NEWCOVERBORDER = getNewCoverBorder();
+    private static final CompoundBorder BRANCHBORDER = getBranchBorder();
 
     private final ImageItem.LinkData linkData;
     private Rectangle area;
@@ -77,6 +78,15 @@ public class MyJLabel extends JLabel {
         return border;
     }
 
+    @NotNull
+    private static CompoundBorder getBranchBorder() {
+        LineBorder lineBorder1 = new LineBorder(new Color(240,128,128), 1);
+        LineBorder lineBorder2 = new LineBorder(new Color(240,128,128), 1); //Light GREEN
+        LineBorder lineBorder3 = new LineBorder(new Color(240,128,128), 1);
+        CompoundBorder border = new CompoundBorder(lineBorder1, new CompoundBorder(lineBorder2, lineBorder3));
+        return border;
+    }
+
 //    public void updatePosition(Rectangle area) {
 //        this.area = area;
 //
@@ -99,7 +109,7 @@ public class MyJLabel extends JLabel {
     }
 
     private void unhighlight() {
-        setBorder(null);
+        setBorder(BRANCHBORDER);
         setLocation(area.getLocation());
         setSize(area.getSize());
     }
@@ -210,5 +220,9 @@ public class MyJLabel extends JLabel {
 
     public String getLinkDataText(){
         return linkData.getText();
+    }
+
+    public void markBranch() {
+        setBorder(BRANCHBORDER);
     }
 }

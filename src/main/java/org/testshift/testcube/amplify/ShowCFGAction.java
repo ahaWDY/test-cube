@@ -103,6 +103,9 @@ public class ShowCFGAction extends AnAction {
         candidates.addAll(testClasses);
         if(candidates.size()>0) {
             this.testClass = (PsiClass) candidates.get(0);
+            if (!this.testClass.getName().replace("Test", "").replace(targetClass.getName(), "").equals("")) {
+                this.testClass=null;
+            }
         }
 
         if(this.testClass==null){

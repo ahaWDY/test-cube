@@ -70,6 +70,19 @@ public class Highlighter {
         }
     }
 
+    public void markBranch(JPanel panel) {
+        Component[] components = panel.getComponents();
+
+        if (components.length > 0) {
+            for (Component component : components) {
+                if (component instanceof ImageContainerPng) {
+                    ImageContainerPng imageContainer = (ImageContainerPng) component;
+                    imageContainer.markBranch();
+                }
+            }
+        }
+    }
+
 //    public String getHighlightText() {
 //        return highlightText;
 //    }

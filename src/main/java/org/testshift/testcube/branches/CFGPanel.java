@@ -328,6 +328,7 @@ public class CFGPanel extends JPanel implements Disposable{
 
     public void maintainInitialCover(){
         highlighter.coverInitialLinesAndBranches(imagesPanel, this.initialCoveredLines, this.initialCoveredBranches);
+        highlighter.markBranch(imagesPanel);
     }
 
     public void maintainNewInitialCover(Set<String> initialCoveredLines, Set<Util.Branch> initialCoveredBranches){

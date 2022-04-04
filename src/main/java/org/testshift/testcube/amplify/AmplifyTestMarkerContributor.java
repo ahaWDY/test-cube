@@ -45,7 +45,7 @@ public class AmplifyTestMarkerContributor extends RunLineMarkerContributor {
                  * From {@link com.intellij.testIntegration.TestRunLineMarkerProvider#getInfo(PsiElement)}
                  */
                 PsiClass containingClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
-                if (!isTestMethod(containingClass, (PsiMethod) parent) && !((PsiMethod) parent).isConstructor() && supportedByDspot((PsiMethod) parent)) {
+                if (!isTestMethod(containingClass, (PsiMethod) parent) && !containingClass.getName().contains("Test") && !((PsiMethod) parent).isConstructor() && supportedByDspot((PsiMethod) parent)) {
                     PsiClass targetClass = Objects.requireNonNull(((PsiMethod) parent).getContainingClass());
 
                     VirtualFile file = parent.getContainingFile().getVirtualFile();
