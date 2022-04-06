@@ -17,7 +17,8 @@
         <toolWindow id="Test Cube" anchor="right"
                     factoryClass="org.testshift.testcube.inspect.TestCubeToolWindowFactory"
                     icon="/icons/amplifyTestsToolWindow.svg"/>
-
+        <runLineMarkerContributor language="JAVA" order="after applicationRunLineMarkerProvider"
+                                  implementationClass="org.testshift.testcube.amplify.AmplifyFakeMarkerContributor"/>
         <runLineMarkerContributor language="JAVA" order="after applicationRunLineMarkerProvider"
                                   implementationClass="org.testshift.testcube.amplify.AmplifyTestMarkerContributor"/>
         <applicationService serviceImplementation="org.testshift.testcube.settings.AppSettingsState"/>

@@ -81,6 +81,10 @@ public class GenerationResult {
                 }
 
                 for (PsiMethod method : methods) {
+                    // limit at most 3 amplified test cases
+                    if(result.generatedTestCases.size()==3){
+                        break;
+                    }
                     Optional<TestCaseBranchCoverageJSON> testCaseJSON = testCaseBranchCoverageJSONList
                                                                     .stream()
                                                                     .filter(tcj -> tcj.getName()

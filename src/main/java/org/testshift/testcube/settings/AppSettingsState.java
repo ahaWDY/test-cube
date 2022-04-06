@@ -20,7 +20,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
 
     public String javaJDKPath = "";
     public String mavenHome = "";
-    public Colors highlightColor = Colors.BRIGHTER;
+    public Colors highlightColor = Colors.DARKER;
 
     // DSpot Config
 //    public boolean generateAssertions = true;

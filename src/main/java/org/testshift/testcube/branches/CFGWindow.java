@@ -422,15 +422,20 @@ public class CFGWindow extends JPanel implements Disposable {
             if (amplifiedTestCasesCount == 0) {
                 notifier.notify(currentProject, "Could find no new test cases through amplification.");
             } else {
-                notifier.notify(currentProject,
-                                "Test Cube found " + amplifiedTestCasesCount + " amplified test cases.",
-                                new InspectResultWithCFGAction(currentProject, testClass, testMethod,
-                                                               this,
-                                                               targetMethod,
-                                                               selectedBranch, expectedTests),
-                                new InspectDSpotTerminalOutputAction());
-                    }
+                if (amplifiedTestCasesCount < 3) {
+                    notifier.notify(currentProject,
+                                    "Test Cube found " + amplifiedTestCasesCount + " amplified test cases.",
+                                    new InspectResultWithCFGAction(currentProject, testClass, testMethod, this,
+                                                                   targetMethod, selectedBranch, expectedTests), new InspectDSpotTerminalOutputAction());
                 }
+                else{
+                    notifier.notify(currentProject,
+                                    "Test Cube found " + "3" + " amplified test cases.",
+                                    new InspectResultWithCFGAction(currentProject, testClass, testMethod, this,
+                                                                   targetMethod, selectedBranch, expectedTests), new InspectDSpotTerminalOutputAction());
+                }
+            }
+        }
     }
 
     private void close(Project project, boolean dispose) {

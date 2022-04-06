@@ -53,9 +53,9 @@ public class MyJLabel extends JLabel {
 
     @NotNull
     private static CompoundBorder getCompoundBorder() {
-        LineBorder lineBorder1 = new LineBorder(Color.RED, 1);
-        LineBorder lineBorder2 = new LineBorder(Color.RED, 1);
-        LineBorder lineBorder3 = new LineBorder(Color.RED, 1);
+        LineBorder lineBorder1 = new LineBorder(Color.RED, 2);
+        LineBorder lineBorder2 = new LineBorder(Color.RED, 2);
+        LineBorder lineBorder3 = new LineBorder(Color.RED, 2);
         CompoundBorder border = new CompoundBorder(lineBorder1, new CompoundBorder(lineBorder2, lineBorder3));
         return border;
     }
