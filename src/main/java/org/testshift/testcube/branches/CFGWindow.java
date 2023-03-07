@@ -3,49 +3,35 @@ package org.testshift.testcube.branches;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.checkout.ProjectCheckoutListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.TestClassBranchCoverageJSON;
-import eu.stamp_project.dspot.common.report.output.selector.extendedcoverage.json.TestClassJSON;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
-import org.testshift.testcube.amplify.*;
+import org.testshift.testcube.amplify.DSpotStartConfiguration;
+import org.testshift.testcube.amplify.InspectDSpotTerminalOutputAction;
+import org.testshift.testcube.amplify.PrettifierStartConfiguration;
 import org.testshift.testcube.branches.preview.image.links.Highlighter;
 import org.testshift.testcube.branches.rendering.ImageFormat;
 import org.testshift.testcube.branches.rendering.RenderCommand;
 import org.testshift.testcube.inspect.InspectResultWithCFGAction;
-import org.testshift.testcube.inspect.InspectTestCubeResultsAction;
 import org.testshift.testcube.misc.Config;
 import org.testshift.testcube.misc.TestCubeNotifier;
 import org.testshift.testcube.misc.Util;
-import org.testshift.testcube.model.GenerationResult;
 import org.testshift.testcube.settings.AppSettingsState;
-import org.testshift.testcube.settings.AskJavaPathDialogWrapper;
-import org.testshift.testcube.settings.AskMavenHomeDialogWrapper;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -63,8 +49,6 @@ public class CFGWindow extends JPanel implements Disposable {
     private String moduleRootPath;
     private String testClass;
     private String testMethod;
-//    private Set<String> initialCoveredLines;
-//    private Set<Util.Branch> initialCoveredBranches;
 
     private int branchNum;
     private int startLine;
@@ -80,14 +64,12 @@ public class CFGWindow extends JPanel implements Disposable {
         this.moduleRootPath = moduleRootPath;
         this.testClass = testClass;
         this.testMethod = testMethod;
-//        this.initialCoveredLines = initialCoveredLines;
-//        this.initialCoveredBranches = initialCoveredBranches;
         this.branchNum = branchNum;
         this.startLine = startLine;
 
         this.contentPanel = new JPanel();
         this.buttonPanel = new JPanel();
-        this.finish = new JButton("Ok");
+        this.finish = new JButton("Generate test to cover the selected branch");
         this.close = new JButton("Close");
 
         ImageFormat imageFormat = ImageFormat.PNG;
@@ -188,6 +170,8 @@ public class CFGWindow extends JPanel implements Disposable {
     }
 
     private void updateInitialCoverage() {
+//        Util.sleepAndRefreshProject(project);
+        project.save();
         DSpotStartConfiguration configuration = new DSpotStartConfiguration(project, moduleRootPath);
         spawnDSpotProcess(configuration, project, selectedBranch, true);
         TestClassBranchCoverageJSON coverageResult = (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project,
@@ -257,7 +241,7 @@ public class CFGWindow extends JPanel implements Disposable {
                     e.printStackTrace();
                 }
 
-//                Util.sleepAndRefreshProject(currentProject);
+                Util.sleepAndRefreshProject(currentProject);
                 // popup about completion
                 List<String> expectedTests = null;
                 try {
@@ -408,9 +392,6 @@ public class CFGWindow extends JPanel implements Disposable {
 
     private void notifyDSpotFinished(Project currentProject ,List<String> expectedTests) {
         TestCubeNotifier notifier = new TestCubeNotifier();
-//        TestClassBranchCoverageJSON coverageResult =
-//                (TestClassBranchCoverageJSON) Util.getBranchCoverageJSON(project, testClass, false);
-//        List<String> expectedTests = Util.getTargetTestMethods(coverageResult, selectedBranch);
 
         if (expectedTests.isEmpty()) {
             notifier.notify(currentProject,

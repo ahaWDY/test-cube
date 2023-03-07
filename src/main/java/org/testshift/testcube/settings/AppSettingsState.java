@@ -20,17 +20,7 @@ public class AppSettingsState implements PersistentStateComponent<AppSettingsSta
 
     public String javaJDKPath = "";
     public String mavenHome = "";
-    public Colors highlightColor = Colors.DARKER;
-
-    // DSpot Config
-//    public boolean generateAssertions = true;
-//    public String selectorCriterion = "ExtendedCoverageSelector";
-//    public static final String[] SELECTOR_CRITERION_OPTIONS = {"PitMutantScoreSelector", "JacocoCoverageSelector",
-//            "TakeAllSelector", "ExtendedCoverageSelector"};
-//    public String inputAmplificationDistributor = "RandomInputAmplDistributor";
-//    public static final String[] INPUT_AMPLIFICATION_DISTRIBUTOR_OPTIONS = {"RandomInputAmplDistributor",
-//    "TextualDistanceInputAmplDistributor", "SimpleInputAmplDistributor"};
-
+    public Colors highlightColor = Colors.BRIGHTER;
 
     public static AppSettingsState getInstance() {
         return ApplicationManager.getApplication().getService(AppSettingsState.class);

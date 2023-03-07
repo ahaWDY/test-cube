@@ -1,30 +1,16 @@
 package org.testshift.testcube.inspect;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiMethod;
-import com.intellij.ui.JBColor;
-import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.TestCaseBranchCoverageJSON;
-import eu.stamp_project.dspot.common.report.output.selector.branchcoverage.json.TestClassBranchCoverageJSON;
 import org.jetbrains.annotations.Contract;
-import org.testshift.testcube.branches.CFGPanel;
 import org.testshift.testcube.branches.CFGWindow;
 import org.testshift.testcube.branches.rendering.RenderCommand;
-import org.testshift.testcube.misc.Colors;
 import org.testshift.testcube.misc.TestCubeNotifier;
-import org.testshift.testcube.misc.Util;
-import org.testshift.testcube.model.AmplifiedTestCase;
 import org.testshift.testcube.model.GeneratedTestCase;
 import org.testshift.testcube.model.GenerationResult;
-import org.testshift.testcube.model.TestCase;
-import org.testshift.testcube.settings.AppSettingsState;
-
-import java.util.List;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,11 +28,6 @@ public class ResultWithCFGWindow extends Component {
     private JButton close;
     private JPanel testCasePanel;
 
-//    private static JPanel contentPanel;
-//    private CFGPanel cfgPanel;
-//    private JPanel selectionPanel;
-//    private JButton finish;
-
     private CFGWindow cfgWindow;
 
     private int currentAmplificationTestCaseIndex;
@@ -57,13 +38,8 @@ public class ResultWithCFGWindow extends Component {
 
 
     public ResultWithCFGWindow(CFGWindow cfgWindow, String targetMethod, GenerationResult generationResult){
-//        this();
         this.amplificationResultPanel = new JPanel();
 
-//        this.cfgPanel = cfgPanel;
-//        this.selectionPanel = new JPanel();
-//        this.finish = new JButton("Continue");
-//        finish.addActionListener(l->finishSelection(project));
         this.cfgWindow = cfgWindow;
 
         this.targetMethod = targetMethod;
@@ -72,13 +48,6 @@ public class ResultWithCFGWindow extends Component {
         this.currentTestCase = generationResult.generatedTestCases.get(
                 currentAmplificationTestCaseIndex);
 
-//        cfgPanel.render(RenderCommand.Reason.FILE_SWITCHED);
-//        cfgPanel.displayResult(RenderCommand.Reason.FILE_SWITCHED);
-//        cfgPanel.maintainInitialCover();
-//        cfgPanel.setNewCoveredLines(currentTestCase.newCoveredLine);
-//        cfgPanel.setNewCoveredBranches(currentTestCase.newCovredBranch);
-//        cfgPanel.maintainNewCover();
-//        cfgPanel.setLayout(new GridLayout());
         cfgWindow.getCfgPanel().render(RenderCommand.Reason.FILE_SWITCHED);
         cfgWindow.getCfgPanel().displayResult(RenderCommand.Reason.FILE_SWITCHED);
         cfgWindow.getCfgPanel().maintainInitialCover();
@@ -116,9 +85,7 @@ public class ResultWithCFGWindow extends Component {
         amplificationResultPanel.setVisible(true);
         amplificationResultPanel.setLayout(new BorderLayout());
         amplificationResultPanel.add(testCasePanel, BorderLayout.NORTH);
-//        amplificationResultPanel.add(cfgPanel, BorderLayout.CENTER);
         amplificationResultPanel.add(cfgWindow.getContent(), BorderLayout.CENTER);
-//        amplificationResultPanel.add(cfgWindow.getButtonPanel(), BorderLayout.SOUTH);
     }
 
     private void showTestCaseInEditor(GeneratedTestCase testCase, TestCaseEditorField editor) {
@@ -139,7 +106,6 @@ public class ResultWithCFGWindow extends Component {
                 TestCubeNotifier notifier = new TestCubeNotifier();
                 notifier.notify(generationResult.project,
                                 "All generated test cases were added or ignored. Thank you for using Test Cube!");
-//                close();
                 return;
             }
         }
@@ -161,8 +127,6 @@ public class ResultWithCFGWindow extends Component {
         cfgWindow.getCfgPanel().setNewCoveredBranches(currentTestCase.newCovredBranch);
         cfgWindow.getCfgPanel().maintainNewCover();
         showTestCaseInEditor(currentTestCase, amplifiedTestCase);
-//        setAmplifiedInformation();
-        // deal with cfgPanel
     }
 
     public void close() {
@@ -183,8 +147,8 @@ public class ResultWithCFGWindow extends Component {
         WriteCommandAction.runWriteCommandAction(generationResult.project, () -> {
             if (method != null) {
                 PsiMethod methodSave = (PsiMethod) method.copy();
-                method.delete();
                 generationResult.getOriginalClass().add(methodSave);
+                method.delete();
                 PsiDocumentManager.getInstance(generationResult.project).commitAllDocuments();
 
                 navigateTestCases(true, true);
@@ -213,27 +177,6 @@ public class ResultWithCFGWindow extends Component {
 
     public void previousTestCase() {
         navigateTestCases(false, false);
-    }
-
-
-    private String htmlStart() {
-        Color foreground = JBColor.foreground();
-        Color link;
-        if (AppSettingsState.getInstance().highlightColor.equals(Colors.DARKER)) {
-            link = JBColor.green.darker();
-        } else {
-            link = JBColor.green.brighter();
-        }
-        return "<html><head><style>a {color:" + colorToRGBHtmlString(link) + ";}</style></head>" +
-               "<body style=\"font-family:Sans-Serif;color:" + colorToRGBHtmlString(foreground) + ";\">";
-    }
-
-    private String colorToRGBHtmlString(Color color) {
-        return "rgb(" + color.getRed() + "," + color.getGreen() + "," + color.getBlue() + ")";
-    }
-
-    private String htmlEnd() {
-        return "</body></html>";
     }
 
     public JComponent getContent() {
